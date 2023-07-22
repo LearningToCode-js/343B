@@ -69,6 +69,7 @@ bool rightIntakeAhead = false;
 bool isPTO = false;
 bool isWallUp = false;
 bool isOn = false;
+bool hang = false;
 int delay = 250;
 
 void wallUp() {

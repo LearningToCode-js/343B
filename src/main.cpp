@@ -14,22 +14,22 @@ pros::ADIDigitalOut ptoLeft('F');
 pros::ADIDigitalOut ptoRight('G');
 
 pros::Motor puncher (9, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
-pros::Motor intakeLeft (8, pros::E_MOTOR_GEARSET_36, false, pros::E_MOTOR_ENCODER_DEGREES);
-pros::Motor intakeRight (8, pros::E_MOTOR_GEARSET_36, false, pros::E_MOTOR_ENCODER_DEGREES);
-pros::Imu imu_sensor(7);
+pros::Motor intakeLeft (6, pros::E_MOTOR_GEARSET_36, false, pros::E_MOTOR_ENCODER_DEGREES);
+pros::Motor intakeRight (7, pros::E_MOTOR_GEARSET_36, false, pros::E_MOTOR_ENCODER_DEGREES);
+pros::Imu imu_sensor(10);
 
 // Chassis constructor
 Drive chassis (
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  {-15, -16, 17}
+  {-18, -19, -20}
 
   // Right Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  ,{18, 19, -20}
+  ,{1, 2, 3}
 
   // IMU Port
-  ,7
+  ,10
 
   // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
   //    (or tracking wheel diameter)
@@ -43,7 +43,7 @@ Drive chassis (
   //    (or gear ratio of tracking wheel)
   // eg. if your drive is 84:36 where the 36t is powered, your RATIO would be 2.333.
   // eg. if your drive is 36:60 where the 60t is powered, your RATIO would be 0.6.
-  ,1.5
+  ,1.6666
 
   // Uncomment if using tracking wheels
   /*
@@ -99,15 +99,15 @@ void shoot() {
 void shootAndPullBackPunch() {
    while(true) {
     if (isShot && limitSwitch.get_value()) {
-      puncher = -127;
+      puncher = 127;
       isShot = false;
       pros::delay(delay);
-    } else if (isShot && !limitSwitch.get_value()) {
-      // if the puncher has punched and the limit switch is not hit, retract the puncher
-      puncher = -127;
     } else if (!isShot && limitSwitch.get_value()) {
-      // if the puncher has not punched and the limit switch is hit, stop the motor
+      // if the puncher has punched and the limit switch is not hit, retract the puncher
       puncher = 0;
+    } else if (!isShot && !limitSwitch.get_value()) {
+      // if the puncher has not punched and the limit switch is hit, stop the motor
+      puncher = 127;
     } 
     pros::delay(10);  // Delay to prevent wasting resources on the V5 Brain
   }
@@ -196,6 +196,7 @@ void initialize() {
   ez::as::initialize();
 
   //My initializations
+  chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
   puncher.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   intakeLeft.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
   intakeRight.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
@@ -231,7 +232,7 @@ void autonomous() {
   chassis.reset_pid_targets(); // Resets PID targets to 0
   chassis.reset_gyro(); // Reset gyro position to 0
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
-  chassis.set_drive_brake(MOTOR_BRAKE_COAST); // Set motors to hold.  This helps autonomous consistency.
+  chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST); // Set motors to hold.  This helps autonomous consistency.
   ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 }
 
@@ -254,34 +255,54 @@ void opcontrol() {
     // chassis.arcade_standard(ez::SINGLE); // Standard single arcade
     // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
     // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
-
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+      
+    }
     // Shoot
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
       shoot();
+      pros::delay(delay);
     }
-    // Intake Boolean
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-      isOn = true;
-      intakeForward = true;
-    } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-      isOn = true;
-      intakeForward = false;
-    } 
 
-    // Reset Intake Spin (NOT Position)
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
-      isOn = false;
-      intakeForward = true;
-    }
-    // Intake Spinning
-    if (isOn) {
-      if (intakeForward) {
+    // Toggle Intake Code
+    // // Intake Boolean
+    // if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+    //   isOn = true;
+    //   intakeForward = true;  
+    // } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+    //   isOn = true;
+    //   intakeForward = false;
+    // } 
+
+    // // Reset Intake Spin (NOT Position)
+    // if (master.get_digital(pros::E_CONTROLLER_DIGITAL_X)) {
+    //   isOn = false;
+    //   intakeForward = true;
+    // }
+    // // Intake Spinning
+    // if (isOn) {
+    //   if (intakeForward) {
+    //   intakeLeft = 127;
+    //   intakeRight = -127;
+    //   } else if (!intakeForward) {
+    //   intakeLeft = -127;
+    //   intakeRight = 127;
+    //   } 
+    // } else {
+    //   intakeLeft = 0;
+    //   intakeRight = 0;
+    // }
+
+    // Hold Intake Code
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
       intakeLeft = 127;
       intakeRight = -127;
-      } else if (!intakeForward) {
+    } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
       intakeLeft = -127;
       intakeRight = 127;
-      } 
+    } else {
+      intakeLeft = 0;
+      intakeRight = 0;
     }
 
     // Intake Pneumatic Logic
@@ -289,25 +310,31 @@ void opcontrol() {
       intakeAhead();
       leftIntakeAhead = true;
       rightIntakeAhead = true;
+      pros::delay(delay);
     } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_UP) && (leftIntakeAhead || rightIntakeAhead)) {
       intakeRetract();
       leftIntakeAhead = false;
       rightIntakeAhead = false;
+      pros::delay(delay);
     } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
       intakeRightPneumatic.set_value(true);
       rightIntakeAhead = true;
+      pros::delay(delay);
     } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
       intakeLeftPneumatic.set_value(true);
       leftIntakeAhead = true;
+      pros::delay(delay);
     }
 
     // WALL Logic
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN) && !isWallUp) {
       wallUp();
       isWallUp = true;
+      pros::delay(delay);
     } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN) && isWallUp) {
       wallDown();
       isWallUp = false;
+      pros::delay(delay);
     }
     
     // PTO Logic
@@ -315,10 +342,12 @@ void opcontrol() {
       ptoLeft.set_value(true);
       ptoRight.set_value(true);
       isPTO = true;
+      pros::delay(delay);
     } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) && isPTO) {
       ptoRight.set_value(false);
       ptoRight.set_value(false);
       isPTO = false;
+      pros::delay(delay);
     }
 
     pros::delay(ez::util::DELAY_TIME); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME

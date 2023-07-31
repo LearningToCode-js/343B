@@ -72,6 +72,21 @@ bool isOn = false;
 bool hang = false;
 int delay = 250;
 
+void runIntakeForward() {
+  intakeLeft = 127;
+  intakeRight = -127;
+}
+
+void runIntakeBackward() {
+  intakeLeft = -127;
+  intakeRight = 127;
+}
+
+void stopIntake() {
+  intakeLeft = 0;
+  intakeRight = 0;
+}
+
 void wallUp() {
   wallLeft.set_value(true);
   wallRight.set_value(true);
@@ -100,8 +115,9 @@ void shootAndPullBackPunch() {
    while(true) {
     if (isShot && limitSwitch.get_value()) {
       puncher = 127;
+      pros::delay(100);
       isShot = false;
-      pros::delay(delay);
+      puncher = 0;
     } else if (!isShot && limitSwitch.get_value()) {
       // if the puncher has punched and the limit switch is not hit, retract the puncher
       puncher = 0;
@@ -125,33 +141,146 @@ const int DRIVE_SPEED = 110; // This is 110/127 (around 87% of max speed).  We d
                              // faster and one side slower, giving better heading correction.
 const int TURN_SPEED  = 90;
 const int SWING_SPEED = 90;
-double tileDiagonal = 67.882251;
-/// 67.882251
+double tileDiagonal = 33.941125497;
+/// 24√2
 
-void left_side() {
+// Autons:
+void offense() {
+  // Blue/Red Ball
+  chassis.set_drive_pid(5, DRIVE_SPEED);
+  chassis.wait_drive();
+  runIntakeForward();
+  pros::delay(50);
+  stopIntake();
+  chassis.set_drive_pid(36, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_swing_pid(ez::RIGHT_SWING, 90, SWING_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(20, DRIVE_SPEED);
+  runIntakeBackward();
+  chassis.wait_drive();
+  pros::delay(100);
+  stopIntake();
 
-}
+  // Middle Ball
+  chassis.set_drive_pid(-18, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(-90, TURN_SPEED);
+  chassis.wait_drive();
+  
+  chassis.set_drive_pid(6, 40);
+  chassis.wait_drive();
+  runIntakeForward();
+  pros::delay(50);
+  stopIntake();
+  chassis.set_drive_pid(-10, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(20, DRIVE_SPEED);
+  chassis.wait_drive();
+  runIntakeBackward();
+  chassis.set_drive_pid(10, DRIVE_SPEED);
+  chassis.wait_drive();
+  stopIntake();
 
-void right_side() {
+  // Near Ball
+  chassis.set_drive_pid(-20, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(160, TURN_SPEED);
+  chassis.wait_drive();
+  
+  chassis.set_drive_pid(20, DRIVE_SPEED, true);
+  chassis.wait_until(15);
+  chassis.set_max_speed(40); 
+  
+  runIntakeForward();
+  pros::delay(50);
+  stopIntake();
 
-}
+  chassis.set_drive_pid(-20, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(-160, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(20, DRIVE_SPEED);
+  chassis.wait_drive();
+  runIntakeBackward();
+  chassis.set_drive_pid(10, DRIVE_SPEED);
+  chassis.wait_drive();
+  stopIntake();
 
-void right_side_2() {
+  // Pole
+  chassis.set_drive_pid(-20, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(120, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(1.5*tileDiagonal, DRIVE_SPEED);
+  chassis.wait_drive();
+};
+
+void defense() {
+  // Middle
+  
+  chassis.set_drive_pid(50, DRIVE_SPEED, true);
+  chassis.wait_until(43);
+  chassis.set_max_speed(40); 
+  chassis.wait_drive();
+  runIntakeForward();
+  pros::delay(200);
+  stopIntake();
+
+  // Back and Shoot and Turn
+  chassis.set_drive_pid(-38, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(15, TURN_SPEED);
+  chassis.wait_drive();
+  shoot();
+  pros::delay(100);
+  chassis.set_turn_pid(180, TURN_SPEED);
+  chassis.wait_drive();
+
+  // Back get Corner Turn and Shoot
+  chassis.set_drive_pid(tileDiagonal, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  intakeAhead();
+  pros::delay(100);
+  runIntakeForward();
+  pros::delay(1500);
+  intakeRetract();
+  pros::delay(100);
+  stopIntake();
+  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(180, TURN_SPEED);
+  chassis.wait_drive();
+  shoot();
+  pros::delay(100);
+  
+  // Turn push 2 things
+  chassis.set_turn_pid(55, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(48, DRIVE_SPEED, true);
+  chassis.wait_drive();
+
+  // Pole
+  chassis.set_turn_pid(90, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(10, DRIVE_SPEED, true);
+  chassis.wait_drive();
+};
+
+void awp() {
   
 
-}
-
-void win_point() {
-  
-}
+};
 
 void skills() {
   
-}
+};
 
 void skillsSafe() {
   
-}
+};
 
 void nothing() {
 
@@ -183,12 +312,9 @@ void initialize() {
 
   // Autonomous Selector using LLEMUdrive_and_turn
   ez::as::auton_selector.add_autons({
-    Auton("Skills\n\nSKILLS AUTON", skills),
-    Auton("Left Side :)", left_side),
-    Auton("Win Point Auton\n\nRoller, turn, go, turn, shoot, backup, turn, go, turn, roller", win_point),
-    Auton("Right Side Auton\n\ngo, turn, shoot, backup, turn, go, roller", right_side),
-    Auton("Skills\n\nSKILLS AUTON SAFE", skillsSafe),
-    Auton("Nothing", nothing),
+    Auton("Offense. Preload + 2 green in. Touch pole last.", offense),
+    Auton("Defense. Start forward-face in middle of tile. In bewteen, then corner, then side, then pole.", defense),
+    Auton("Do this to run nothing if autons are glitchy", nothing),
   });
 
   // Initialize chassis and auton selector

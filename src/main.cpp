@@ -70,6 +70,7 @@ bool isPTO = false;
 bool isWallUp = false;
 bool isOn = false;
 bool hang = false;
+bool instaShoot = false;
 int delay = 250;
 
 void runIntakeForward() {
@@ -113,18 +114,22 @@ void shoot() {
 
 void shootAndPullBackPunch() {
    while(true) {
-    if (isShot && limitSwitch.get_value()) {
+    if (instaShoot) {
       puncher = 127;
-      pros::delay(100);
-      isShot = false;
-      puncher = 0;
-    } else if (!isShot && limitSwitch.get_value()) {
-      // if the puncher has punched and the limit switch is not hit, retract the puncher
-      puncher = 0;
-    } else if (!isShot && !limitSwitch.get_value()) {
-      // if the puncher has not punched and the limit switch is hit, stop the motor
-      puncher = 127;
-    } 
+    } else {
+      if (isShot && limitSwitch.get_value()) {
+        puncher = 127;
+        pros::delay(100);
+        isShot = false;
+        puncher = 0;
+      } else if (!isShot && limitSwitch.get_value()) {
+        // if the puncher has punched and the limit switch is not hit, retract the puncher
+        puncher = 0;
+      } else if (!isShot && !limitSwitch.get_value()) {
+        // if the puncher has not punched and the limit switch is hit, stop the motor
+        puncher = 127;
+      } 
+    }  
     pros::delay(10);  // Delay to prevent wasting resources on the V5 Brain
   }
 }
@@ -382,7 +387,13 @@ void opcontrol() {
     // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
     // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
-      
+      instaShoot = !instaShoot;
+      if (instaShoot) {
+        master.print(0, 0, "Instashoot ON");
+      } else if (!instaShoot) {
+        master.print(0, 0, "Instashoot OFF");
+      };
+      pros::delay(delay);
     }
     // Shoot
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {

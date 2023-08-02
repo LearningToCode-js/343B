@@ -443,7 +443,7 @@ void opcontrol() {
     }
 
     // Intake Pneumatic Logic
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_UP) && !(leftIntakeAhead || rightIntakeAhead)) {
       intakeAhead();
       leftIntakeAhead = true;
       rightIntakeAhead = true;
@@ -453,11 +453,13 @@ void opcontrol() {
       leftIntakeAhead = false;
       rightIntakeAhead = false;
       pros::delay(delay);
-    } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+    } 
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
       intakeRightPneumatic.set_value(true);
       rightIntakeAhead = true;
       pros::delay(delay);
-    } else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+    } 
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
       intakeLeftPneumatic.set_value(true);
       leftIntakeAhead = true;
       pros::delay(delay);

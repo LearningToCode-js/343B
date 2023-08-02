@@ -5,31 +5,31 @@
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
 
-pros::ADIDigitalIn limitSwitch('A');
-pros::ADIDigitalOut wallLeft('B');
-pros::ADIDigitalOut wallRight('C');
+pros::ADIDigitalIn limitSwitch('H');
+pros::ADIDigitalOut wallLeft('E');
+pros::ADIDigitalOut wallRight('G');
 pros::ADIDigitalOut intakeLeftPneumatic('D');
-pros::ADIDigitalOut intakeRightPneumatic('E');
-pros::ADIDigitalOut ptoLeft('F');
-pros::ADIDigitalOut ptoRight('G');
+pros::ADIDigitalOut intakeRightPneumatic('F');
+pros::ADIDigitalOut ptoLeft('A');
+pros::ADIDigitalOut ptoRight('B');
 
-pros::Motor puncher (9, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_DEGREES);
+pros::Motor puncher (9, pros::E_MOTOR_GEARSET_36, true, pros::E_MOTOR_ENCODER_DEGREES);
 pros::Motor intakeLeft (6, pros::E_MOTOR_GEARSET_36, false, pros::E_MOTOR_ENCODER_DEGREES);
 pros::Motor intakeRight (7, pros::E_MOTOR_GEARSET_36, false, pros::E_MOTOR_ENCODER_DEGREES);
-pros::Imu imu_sensor(10);
+pros::Imu imu_sensor(19);
 
 // Chassis constructor
 Drive chassis (
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  {-18, -19, -20}
+  {-1, -2, -20}
 
   // Right Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  ,{1, 2, 3}
+  ,{4, 5, 7}
 
   // IMU Port
-  ,10
+  ,19
 
   // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
   //    (or tracking wheel diameter)
